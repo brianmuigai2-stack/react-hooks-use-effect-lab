@@ -1,12 +1,33 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 function Question({ question, onAnswered }) {
   const [timeRemaining, setTimeRemaining] = useState(10);
 
-  // add useEffect code
+  // Start the 1-second timeout loop. We use a timeout that re-schedules
+  // itself indirectly by depending on timeRemaining.
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setTimeRemaining((prev) => {
+        if (prev <= 1) {
+          // time's up: notify parent and reset for next question
+          onAnswered(false);
+          return 10; // reset to 10 for the next question
+        }
+        return prev - 1; // count down
+      });
+    }, 1000);
+
+    // cleanup the timeout if the effect re-runs or component unmounts
+    return () => clearTimeout(timeoutId);
+  }, [timeRemaining, onAnswered, question]);
+
+  // If a new question arrives, immediately reset the visible timer to 10.
+  useEffect(() => {
+    setTimeRemaining(10);
+  }, [question]);
 
   function handleAnswer(isCorrect) {
-    setTimeRemaining(10);
+    setTimeRemaining(10); // reset for the next question immediately
     onAnswered(isCorrect);
   }
 
